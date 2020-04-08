@@ -1,6 +1,6 @@
 #pragma once
-#include <plog/Appenders/IAppender.h>
-#include <plog/WinApi.h>
+#include "../Appenders/IAppender.h"
+#include "../WinApi.h"
 
 namespace plog
 {

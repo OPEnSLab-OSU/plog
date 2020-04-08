@@ -1,7 +1,6 @@
 #pragma once
-#include <plog/Record.h>
-#include <plog/Util.h>
-#include <iomanip>
+#include "../Record.h"
+#include "../Util.h"
 
 namespace plog
 {
@@ -16,18 +15,17 @@ namespace plog
 
         static util::nstring format(const Record& record)
         {
-            tm t;
-            (useUtcTime ? util::gmtime_s : util::localtime_s)(&t, &record.getTime().time);
-
-            util::nostringstream ss;
-            ss << t.tm_year + 1900 << "-" << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_mon + 1 << PLOG_NSTR("-") << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_mday << PLOG_NSTR(" ");
-            ss << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_hour << PLOG_NSTR(":") << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_min << PLOG_NSTR(":") << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_sec << PLOG_NSTR(".") << std::setfill(PLOG_NSTR('0')) << std::setw(3) << record.getTime().millitm << PLOG_NSTR(" ");
-            ss << std::setfill(PLOG_NSTR(' ')) << std::setw(5) << std::left << severityToString(record.getSeverity()) << PLOG_NSTR(" ");
+            char buf[MAX_MSG_LEN+128];
+            util::nostringstream ss(buf, MAX_MSG_LEN+128);
+            DateTime t = record.getTime().time;
+            ss << int(t.year()) << "-" << setfill(PLOG_NSTR('0')) << setw(2) << short(t.month()) << PLOG_NSTR("-") << setfill(PLOG_NSTR('0')) << setw(2) << short(t.day()) << PLOG_NSTR(" ");
+            ss << setfill(PLOG_NSTR('0')) << setw(2) << short(t.hour()) << PLOG_NSTR(":") << setfill(PLOG_NSTR('0')) << setw(2) << short(t.minute()) << PLOG_NSTR(":") << setfill(PLOG_NSTR('0')) << setw(2) << short(t.second()) << PLOG_NSTR(".") << setfill(PLOG_NSTR('0')) << setw(3) << record.getTime().millitm << PLOG_NSTR(" ");
+            ss << setfill(PLOG_NSTR(' ')) << setw(5) << left << severityToString(record.getSeverity()) << PLOG_NSTR(" ");
             ss << PLOG_NSTR("[") << record.getTid() << PLOG_NSTR("] ");
             ss << PLOG_NSTR("[") << record.getFunc() << PLOG_NSTR("@") << record.getLine() << PLOG_NSTR("] ");
             ss << record.getMessage() << PLOG_NSTR("\n");
-
-            return ss.str();
+            util::nstring str(ss.buf());
+            return str;
         }
     };
 

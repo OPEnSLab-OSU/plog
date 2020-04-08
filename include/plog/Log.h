@@ -4,8 +4,8 @@
 //  License: MPL 2.0, http://mozilla.org/MPL/2.0/
 
 #pragma once
-#include <plog/Logger.h>
-#include <plog/Init.h>
+#include "Logger.h"
+#include "Init.h"
 
 //////////////////////////////////////////////////////////////////////////
 // Helper macros that get context info
@@ -16,13 +16,7 @@
 #   define PLOG_GET_THIS()      reinterpret_cast<void*>(0)
 #endif
 
-#ifdef _MSC_VER
 #   define PLOG_GET_FUNC()      __FUNCTION__
-#elif defined(__BORLANDC__)
-#   define PLOG_GET_FUNC()      __FUNC__
-#else
-#   define PLOG_GET_FUNC()      __PRETTY_FUNCTION__
-#endif
 
 #ifdef PLOG_CAPTURE_FILE
 #   define PLOG_GET_FILE()      __FILE__

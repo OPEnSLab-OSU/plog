@@ -1,8 +1,8 @@
 #pragma once
-#include <plog/Logger.h>
-#include <plog/Formatters/CsvFormatter.h>
-#include <plog/Formatters/TxtFormatter.h>
-#include <plog/Appenders/RollingFileAppender.h>
+#include "Logger.h"
+#include "Formatters/CsvFormatter.h"
+#include "Formatters/TxtFormatter.h"
+#include "Appenders/RollingFileAppender.h"
 #include <cstring>
 
 namespace plog
@@ -12,11 +12,7 @@ namespace plog
         bool isCsv(const util::nchar* fileName)
         {
             const util::nchar* dot = util::findExtensionDot(fileName);
-#ifdef _WIN32
-            return dot && 0 == std::wcscmp(dot, L".csv");
-#else
             return dot && 0 == std::strcmp(dot, ".csv");
-#endif
         }
     }
 
@@ -68,28 +64,4 @@ namespace plog
     //////////////////////////////////////////////////////////////////////////
     // CHAR variants for Windows
 
-#ifdef _WIN32
-    template<class Formatter, int instanceId>
-    inline Logger<instanceId>& init(Severity maxSeverity, const char* fileName, size_t maxFileSize = 0, int maxFiles = 0)
-    {
-        return init<Formatter, instanceId>(maxSeverity, util::toWide(fileName).c_str(), maxFileSize, maxFiles);
-    }
-
-    template<class Formatter>
-    inline Logger<PLOG_DEFAULT_INSTANCE_ID>& init(Severity maxSeverity, const char* fileName, size_t maxFileSize = 0, int maxFiles = 0)
-    {
-        return init<Formatter, PLOG_DEFAULT_INSTANCE_ID>(maxSeverity, fileName, maxFileSize, maxFiles);
-    }
-
-    template<int instanceId>
-    inline Logger<instanceId>& init(Severity maxSeverity, const char* fileName, size_t maxFileSize = 0, int maxFiles = 0)
-    {
-        return init<instanceId>(maxSeverity, util::toWide(fileName).c_str(), maxFileSize, maxFiles);
-    }
-
-    inline Logger<PLOG_DEFAULT_INSTANCE_ID>& init(Severity maxSeverity, const char* fileName, size_t maxFileSize = 0, int maxFiles = 0)
-    {
-        return init<PLOG_DEFAULT_INSTANCE_ID>(maxSeverity, fileName, maxFileSize, maxFiles);
-    }
-#endif
 }

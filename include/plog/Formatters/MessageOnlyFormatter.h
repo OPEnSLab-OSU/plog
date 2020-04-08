@@ -1,6 +1,6 @@
 #pragma once
-#include <plog/Record.h>
-#include <plog/Util.h>
+#include "../Record.h"
+#include "../Util.h"
 
 namespace plog
 {
@@ -13,11 +13,12 @@ namespace plog
         }
 
         static util::nstring format(const Record& record)
-        {
-            util::nostringstream ss;
-            ss << record.getMessage() << PLOG_NSTR("\n");
-
-            return ss.str();
+        { 
+            util::nstring str = record.getMessage();
+            
+            str += PLOG_NSTR("\n");
+            
+            return str;
         }
     };
 }

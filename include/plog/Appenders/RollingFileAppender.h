@@ -1,9 +1,8 @@
 #pragma once
-#include <plog/Appenders/IAppender.h>
-#include <plog/Converters/UTF8Converter.h>
-#include <plog/Converters/NativeEOLConverter.h>
-#include <plog/Util.h>
-#include <algorithm>
+#include "../Appenders/IAppender.h"
+#include "../Converters/UTF8Converter.h"
+#include "../Converters/NativeEOLConverter.h"
+#include "../Util.h"
 
 namespace plog
 {
@@ -20,16 +19,6 @@ namespace plog
             util::splitFileName(fileName, m_fileNameNoExt, m_fileExt);
         }
 
-#ifdef _WIN32
-        RollingFileAppender(const char* fileName, size_t maxFileSize = 0, int maxFiles = 0)
-            : m_fileSize()
-            , m_maxFileSize((std::max)(static_cast<off_t>(maxFileSize), static_cast<off_t>(1000))) // set a lower limit for the maxFileSize
-            , m_maxFiles(maxFiles)
-            , m_firstWrite(true)
-        {
-            util::splitFileName(util::toWide(fileName).c_str(), m_fileNameNoExt, m_fileExt);
-        }
-#endif
 
         virtual void write(const Record& record)
         {
@@ -44,13 +33,18 @@ namespace plog
             {
                 rollLogFiles();
             }
-
-            int bytesWritten = m_file.write(Converter::convert(Formatter::format(record)));
-
+            
+            util::nstring str = Formatter::format(record);
+            
+            str = Converter::convert(str);
+            
+            int bytesWritten = m_file.write(str);
+            
             if (bytesWritten > 0)
             {
                 m_fileSize += bytesWritten;
             }
+            
         }
 
         void rollLogFiles()
@@ -58,14 +52,14 @@ namespace plog
             m_file.close();
 
             util::nstring lastFileName = buildFileName(m_maxFiles - 1);
-            util::File::unlink(lastFileName.c_str());
+            util::File::unlink(lastFileName);
 
             for (int fileNumber = m_maxFiles - 2; fileNumber >= 0; --fileNumber)
             {
                 util::nstring currentFileName = buildFileName(fileNumber);
                 util::nstring nextFileName = buildFileName(fileNumber + 1);
 
-                util::File::rename(currentFileName.c_str(), nextFileName.c_str());
+                util::File::rename(currentFileName, nextFileName);
             }
 
             openLogFile();
@@ -76,7 +70,7 @@ namespace plog
         void openLogFile()
         {
             util::nstring fileName = buildFileName();
-            m_fileSize = m_file.open(fileName.c_str());
+            m_fileSize = m_file.open(fileName);
 
             if (0 == m_fileSize)
             {
@@ -98,13 +92,11 @@ namespace plog
             {
                 ss << '.' << fileNumber;
             }
-
-            if (!m_fileExt.empty())
+            if (m_fileExt.length())
             {
                 ss << '.' << m_fileExt;
             }
-
-            return ss.str();
+            return util::nstring(ss.buf());
         }
 
     private:
