@@ -13,7 +13,6 @@ namespace plog
         virtual void write(const Record& record)
         {
             util::nstring str = Formatter::format(record);
-            util::MutexLock lock(this->m_mutex);
 
             setColor(record.getSeverity());
             this->writestr(str);

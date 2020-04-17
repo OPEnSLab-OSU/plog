@@ -122,12 +122,12 @@ namespace plog
         class File : NonCopyable
         {
         public:
-            File() : m_file(-1)
+            File()
             {
                 f.dateTimeCallback(FatTime);
             }
 
-            File(const nchar* fileName) : m_file(-1)
+            File(const nchar* fileName)
             {
                 open(fileName);
             }
@@ -139,17 +139,29 @@ namespace plog
 
             off_t open(const nchar* fileName)
             {
+                fname = util::nstring(fileName);
                 f.open(fileName, O_CREAT | O_WRONLY | O_AT_END);
-                seek(0, SEEK_END);
+                return f.fileSize();
             }
             
             off_t open(util::nstring fileName)
             {
                 return open(fileName.c_str());
             }
+            
+            off_t reopen(void)
+            {
+                f.close();
+                f.open(fname.c_str(), O_WRONLY | O_AT_END);
+                return f.fileSize();
+            }
 
             int write(const void* buf, size_t count)
             {
+                if(!f.isOpen())
+                {
+                    reopen();
+                }
                 int len = f.write(buf, count);
                 f.sync();
                 return len;
@@ -172,11 +184,7 @@ namespace plog
 
             void close()
             {
-                if (m_file != -1)
-                {
-                    f.close();
-                    m_file = -1;
-                }
+                f.close();
             }
 
             static int unlink(const nchar* fileName)
@@ -202,8 +210,8 @@ namespace plog
             }
 
         private:
-            int m_file;
-            SdBaseFile f;
+            util::nstring fname;
+            FatFile f;
             static void FatTime(uint16_t* date, uint16_t* time) {
               uint16_t year;
               uint8_t month, day, hour, minute, second;
@@ -215,47 +223,6 @@ namespace plog
               // return time using FAT_TIME macro to format fields
               *time = FAT_TIME(t.time.hour(), t.time.minute(), t.time.second());
             }
-        };
-        class Mutex : NonCopyable
-        {
-        public:
-            Mutex()
-            {
-            }
-
-            ~Mutex()
-            {
-            }
-
-            friend class MutexLock;
-
-        private:
-            void lock()
-            {
-            }
-
-            void unlock()
-            {
-            }
-
-        private:
-        };
-
-        class MutexLock : NonCopyable
-        {
-        public:
-            MutexLock(Mutex& mutex) : m_mutex(mutex)
-            {
-                m_mutex.lock();
-            }
-
-            ~MutexLock()
-            {
-                m_mutex.unlock();
-            }
-
-        private:
-            Mutex& m_mutex;
         };
 
         template<class T>

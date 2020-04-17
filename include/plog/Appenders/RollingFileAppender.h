@@ -12,7 +12,7 @@ namespace plog
     public:
         RollingFileAppender(const util::nchar* fileName, size_t maxFileSize = 0, int maxFiles = 0)
             : m_fileSize()
-            , m_maxFileSize((std::max)(static_cast<off_t>(maxFileSize), static_cast<off_t>(1000))) // set a lower limit for the maxFileSize
+            , m_maxFileSize(maxFileSize)
             , m_maxFiles(maxFiles)
             , m_firstWrite(true)
         {
@@ -22,12 +22,9 @@ namespace plog
 
         virtual void write(const Record& record)
         {
-            util::MutexLock lock(m_mutex);
-
             if (m_firstWrite)
             {
                 openLogFile();
-                m_firstWrite = false;
             }
             else if (m_maxFiles > 0 && m_fileSize > m_maxFileSize && -1 != m_fileSize)
             {
@@ -63,7 +60,6 @@ namespace plog
             }
 
             openLogFile();
-            m_firstWrite = false;
         }
 
     private:
@@ -71,21 +67,17 @@ namespace plog
         {
             util::nstring fileName = buildFileName();
             m_fileSize = m_file.open(fileName);
-
             if (0 == m_fileSize)
             {
-                int bytesWritten = m_file.write(Converter::header(Formatter::header()));
-
-                if (bytesWritten > 0)
-                {
-                    m_fileSize += bytesWritten;
-                }
+                m_fileSize = m_file.write(Converter::header(Formatter::header()));
             }
+            m_firstWrite = false;
         }
 
         util::nstring buildFileName(int fileNumber = 0)
         {
-            util::nostringstream ss;
+            char buf[64];
+            util::nostringstream ss(buf, 64);
             ss << m_fileNameNoExt;
 
             if (fileNumber > 0)
@@ -96,11 +88,10 @@ namespace plog
             {
                 ss << '.' << m_fileExt;
             }
-            return util::nstring(ss.buf());
+            return util::nstring(buf);
         }
 
     private:
-        util::Mutex     m_mutex;
         util::File      m_file;
         off_t           m_fileSize;
         const off_t     m_maxFileSize;

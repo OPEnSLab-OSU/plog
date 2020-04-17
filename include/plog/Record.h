@@ -7,40 +7,6 @@
 
 namespace plog
 {
-    namespace detail
-    {
-        //////////////////////////////////////////////////////////////////////////
-        // Stream output operators as free functions
-
-        inline void operator<<(util::nostringstream& stream, const char* data)
-       {
-            data = data ? data : "(null)";
-            Serial.print(data);
-            operator<<(stream, data);
-        }
-
-        inline void operator<<(util::nostringstream& stream, const util::nstring& data)
-        {
-            plog::detail::operator<<(stream, data.c_str());
-        }
-
-#if PLOG_ENABLE_WCHAR_INPUT
-        inline void operator<<(util::nostringstream& stream, const wchar_t* data)
-        {
-            data = data ? data : L"(null)";
-
-            std::operator<<(stream, util::toNarrow(data));
-        }
-
-        inline void operator<<(util::nostringstream& stream, const std::wstring& data)
-        {
-            plog::detail::operator<<(stream, data.c_str());
-        }
-#endif
-
-
-    }
-
     class Record
     {
     public:
@@ -48,7 +14,6 @@ namespace plog
             : m_severity(severity), m_tid(util::gettid()), m_object(object), m_line(line), m_func(func), m_file(file), m_instanceId(instanceId), m_message(new char[MAX_MSG_LEN], MAX_MSG_LEN)
         {
             util::ftime(&m_time);
-            
         }
 
         Record& ref()
@@ -88,8 +53,6 @@ namespace plog
         template<typename T>
         Record& operator<<(const T& data)
         {
-            using namespace plog::detail;
-
             m_message << data;
             return *this;
         }

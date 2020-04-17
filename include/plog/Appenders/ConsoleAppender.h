@@ -15,7 +15,6 @@ namespace plog
         virtual void write(const Record& record)
         {
             util::nstring str = Formatter::format(record);
-            util::MutexLock lock(m_mutex);
 
             writestr(str);
         }
@@ -29,7 +28,6 @@ namespace plog
     private:
 
     protected:
-        util::Mutex m_mutex;
         const bool  m_isatty;
     };
 }
