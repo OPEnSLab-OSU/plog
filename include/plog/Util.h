@@ -27,6 +27,7 @@ namespace plog
         typedef char nchar;
         DateTime dwoke; // RTC time reference
         long twoke;     // millis() reference
+        short tz;       // local timezone (-12 to +12). Half-hour zones not supported
 
         inline void localtime_s(struct tm* t, const time_t* time)
         {
@@ -43,12 +44,17 @@ namespace plog
             DateTime time;
             unsigned short millitm;
         };
+        
+        inline void ftime(Time* t, long timezone)
+        {
+            long tv = millis() - twoke;
+            t->time = dwoke + TimeSpan(timezone*3600 + tv/1000);
+            t->millitm = tv%1000;
+        }
 
         inline void ftime(Time* t)
         {
-            long tv = millis() - twoke;
-            t->time = dwoke + TimeSpan(tv/1000);
-            t->millitm = tv%1000;
+            return ftime(t, tz);
         }
 
         inline unsigned int gettid()
@@ -217,7 +223,7 @@ namespace plog
               uint8_t month, day, hour, minute, second;
               // User gets date and time from GPS or real-time clock here
               Time t;
-              ftime(&t);
+              ftime(&t, 0); // UTC timezone
               // return date using FAT_DATE macro to format fields
               *date = FAT_DATE(t.time.year(), t.time.month(), t.time.day());
               // return time using FAT_TIME macro to format fields
@@ -253,8 +259,10 @@ namespace plog
         template<class T>
         T* Singleton<T>::m_instance = NULL;
     }
-    void TimeSync( DateTime now ){
+    // We set the system time in UTC, even if our time source is localtime
+    void TimeSync( DateTime now, short timezone = 0 ){
         util::twoke = millis();
-        util::dwoke = now;
+        util::dwoke = now - TimeSpan(timezone * 3600);
+        util::tz = timezone;
     }
 }

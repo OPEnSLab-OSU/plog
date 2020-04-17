@@ -16,7 +16,7 @@ void setup(){
     Serial1.println("SD initialization failed!");
   // Time needs to be resynced at least every 60 days or any time you wake from sleep.
   // Normally you would do this with the RTC, but this is a minimal example
-  plog::TimeSync(DateTime(__DATE__, __TIME__));
+  plog::TimeSync(DateTime(__DATE__, __TIME__), -7);
   plog::init(plog::debug, &fa);
   Serial.println("Setup complete.");
   /*
