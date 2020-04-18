@@ -105,13 +105,13 @@ namespace plog
             return m_line;
         }
 
-        virtual const util::nchar* getMessage() const
-        {
-            return static_cast<const util::nchar*>(
-                static_cast<util::nostringstream>(m_message).buf()
-            );
-        }
-
+        virtual const util::nchar* getMessage() const 
+		{
+			return static_cast<const util::nchar*>( 
+				const_cast<Record*>(this)->m_message.buf()
+			); 
+		}
+		
         virtual const char* getFunc() const
         {
             m_funcStr = util::processFuncName(m_func);
