@@ -25,9 +25,9 @@ namespace plog
         typedef obufstream nostringstream;
         typedef ibufstream nistringstream;
         typedef char nchar;
-        DateTime dwoke; // RTC time reference
-        long twoke;     // millis() reference
-        short tz;       // local timezone (-12 to +12). Half-hour zones not supported
+        static DateTime dwoke; // RTC time reference
+        static long twoke;     // millis() reference
+        static short tz;       // local timezone (-12 to +12). Half-hour zones not supported
 
         inline void localtime_s(struct tm* t, const time_t* time)
         {
@@ -260,7 +260,7 @@ namespace plog
         T* Singleton<T>::m_instance = NULL;
     }
     // We set the system time in UTC, even if our time source is localtime
-    void TimeSync( DateTime now, short timezone = 0 ){
+    static void TimeSync( DateTime now, short timezone = 0 ){
         util::twoke = millis();
         util::dwoke = now - TimeSpan(timezone * 3600);
         util::tz = timezone;
