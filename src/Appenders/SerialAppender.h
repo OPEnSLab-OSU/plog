@@ -29,6 +29,7 @@ namespace plog
         void writestr(const util::nstring& str)
         {
             ser.print( str );
+            ser.print( '\r' ); // Serial terminals need a carriage return
         }
 
     private:

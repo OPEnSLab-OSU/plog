@@ -25,9 +25,9 @@ namespace plog
         typedef obufstream nostringstream;
         typedef ibufstream nistringstream;
         typedef char nchar;
-        static DateTime dwoke; // RTC time reference
-        static long twoke;     // millis() reference
-        static short tz;       // local timezone (-12 to +12). Half-hour zones not supported
+        extern DateTime dwoke; // RTC time reference
+        extern long twoke;     // millis() reference
+        extern short tz;       // local timezone (-12 to +12). Half-hour zones not supported
 
         inline void localtime_s(struct tm* t, const time_t* time)
         {
@@ -146,7 +146,7 @@ namespace plog
             off_t open(const nchar* fileName)
             {
                 fname = util::nstring(fileName);
-                f.open(fileName, O_CREAT | O_WRONLY | O_AT_END);
+                f.open(fileName, O_CREAT | O_WRONLY | O_APPEND);
                 return f.fileSize();
             }
             
@@ -260,7 +260,7 @@ namespace plog
         T* Singleton<T>::m_instance = NULL;
     }
     // We set the system time in UTC, even if our time source is localtime
-    static void TimeSync( DateTime now, short timezone = 0 ){
+    inline void TimeSync( DateTime now, long timezone = 0 ){
         util::twoke = millis();
         util::dwoke = now - TimeSpan(timezone * 3600);
         util::tz = timezone;

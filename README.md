@@ -1,5 +1,5 @@
-# Plog - portable, simple and extensible C++ logging library
-Pretty powerful logging library in about 1000 lines of code [![Build Status](https://travis-ci.org/SergiusTheBest/plog.svg?branch=master)](https://travis-ci.org/SergiusTheBest/plog) [![Build status](https://ci.appveyor.com/api/projects/status/rna5gwhqjb13wovr/branch/master?svg=true)](https://ci.appveyor.com/project/SergiusTheBest/plog/branch/master) [![CircleCI](https://circleci.com/gh/SergiusTheBest/plog.svg?style=svg)](https://circleci.com/gh/SergiusTheBest/plog) [![Build Status](https://api.cirrus-ci.com/github/SergiusTheBest/plog.svg)](https://cirrus-ci.com/github/SergiusTheBest/plog)
+# Plog - powerful, simple and extensible C++ logging library
+Pretty powerful logging library in about 1000 lines of code
 
 - [Introduction](#introduction)
   - [Hello log!](#hello-log)
@@ -7,7 +7,8 @@ Pretty powerful logging library in about 1000 lines of code [![Build Status](htt
 - [Usage](#usage)
   - [Step 1: Adding includes](#step-1-adding-includes)
   - [Step 2: Initialization](#step-2-initialization)
-  - [Step 3: Logging](#step-3-logging)
+  - [Step 3: Synchronization](#step-3-synchronization)
+  - [Step 4: Logging](#step-4-logging)
     - [Basic logging macros](#basic-logging-macros)
     - [Conditional logging macros](#conditional-logging-macros)
     - [Logger severity checker](#logger-severity-checker)
@@ -33,11 +34,8 @@ Pretty powerful logging library in about 1000 lines of code [![Build Status](htt
     - [NativeEOLConverter](#nativeeolconverter)
   - [Appender](#appender)
     - [RollingFileAppender](#rollingfileappender)
-    - [ConsoleAppender](#consoleappender)
-    - [ColorConsoleAppender](#colorconsoleappender)
-    - [AndroidAppender](#androidappender)
-    - [EventLogAppender](#eventlogappender)
-    - [DebugOutputAppender](#debugoutputappender)
+    - [SimpleFileAppender](#simplefileappender)
+    - [SerialAppender](#serialappender)
 - [Miscellaneous notes](#miscellaneous-notes)
   - [Lazy stream evaluation](#lazy-stream-evaluation)
   - [Stream improvements over std::ostream](#stream-improvements-over-stdostream)
@@ -45,7 +43,6 @@ Pretty powerful logging library in about 1000 lines of code [![Build Status](htt
   - [Headers to include](#headers-to-include)
   - [Unicode](#unicode)
   - [Wide string support](#wide-string-support)
-  - [Performance](#performance)
   - [Printf style formatting](#printf-style-formatting)
   - [LOG_XXX macro name clashes](#log_xxx-macro-name-clashes)
 - [Extending](#extending)
@@ -53,10 +50,7 @@ Pretty powerful logging library in about 1000 lines of code [![Build Status](htt
   - [Custom appender](#custom-appender)
   - [Custom formatter](#custom-formatter)
   - [Custom converter](#custom-converter)
-- [Samples](#samples)
-- [References](#references)
-  - [Competing C++ log libraries](#competing-c-log-libraries)
-  - [Tools and useful info](#tools-and-useful-info)
+- [Examples](#examples)
 - [License](#license)
 - [Version history](#version-history)
 
@@ -68,32 +62,29 @@ Plog is a C++ logging library that is designed to be as simple, small and flexib
 Here is a minimal hello log sample:
 
 ```cpp
-#include <plog/Log.h> // Step1: include the header
+#include <Plog.h> // Step1: include the header
 
-int main()
-{
-    plog::init(plog::debug, "Hello.txt"); // Step2: initialize the logger
+static plog::SerialAppender<plog::TxtFormatter> serialAppender(Serial);
 
-    // Step3: write log messages using a special macro
-    // There are several log macros, use the macro you liked the most
+void setup(){
+  Serial.begin(115200);
+  plog::init(plog::debug, &serialAppender);// Step2: initialize the logger.
+  plog::TimeSync(DateTime(__DATE__, __TIME__), -7); // Step3: Synchronize the time
+}
 
-    PLOGD << "Hello log!"; // short macro
-    PLOG_DEBUG << "Hello log!"; // long macro
-    PLOG(plog::debug) << "Hello log!"; // function-style macro
-    
-    // Also you can use LOG_XXX macro but it may clash with other logging libraries
-    LOGD << "Hello log!"; // short macro
-    LOG_DEBUG << "Hello log!"; // long macro
-    LOG(plog::debug) << "Hello log!"; // function-style macro
-
-    return 0;
+void loop(){
+  // Step4: write log messages using a special macro. There are several log macros, use the macro you liked the most.
+  PLOGD << "Hello log!"; // short macro
+  PLOG_DEBUG << "Hello log!"; // long macro
+  PLOG(plog::debug) << "Hello log!"; // function-style macro
+  delay(1000);
 }
 ```
 
 And its output:
 
 ```
-2015-05-18 23:12:43.921 DEBUG [21428] [main@13] Hello log!
+2015-05-18 23:12:43.921 DEBUG [21428] [loop@13] Hello log!
 2015-05-18 23:12:43.968 DEBUG [21428] [main@14] Hello log!
 2015-05-18 23:12:43.968 DEBUG [21428] [main@15] Hello log!
 ```
@@ -171,7 +162,10 @@ Here the logger is initialized to write all messages with up to warning severity
 
 *Note: see [Custom initialization](#custom-initialization) for advanced usage.*
 
-## Step 3: Logging
+## Step 3: Synchronization
+The fastest and most portable time clock on Arduino is the millis() function, which tells you milliseconds since the microcontroller turned on or reset. It can count up to 50 days. However, it doesn't tell you actual time. To get actual time without an RTC, we use the compiled time as a reference. If you have an RTC attached to your Arduino, use that instead.
+
+## Step 4: Logging
 Logging is performed with the help of special macros. A log message is constructed using stream output operators `<<`. Thus it is type-safe and extendable in contrast to a format string output.
 
 ### Basic logging macros
@@ -823,30 +817,15 @@ Core components are:
 - [RollingFileAppender](#rollingfileappender)
 
 ## Unicode
-Plog is unicode aware and wide string friendly. All messages are converted to a system native char type:
-
-- `wchar_t` - on Windows
-- `char` - on all other systems
-
-Also `char` is treated as:
-
-- active code page - on Windows
-- UTF-8 - on all other systems
-
+Plog is unicode aware and wide string friendly. All messages are converted to a system native char type.
 Internally plog uses `nstring`, `nstringstream` and `nchar` ('n' for native) that are defined as:
 
 ```cpp
-#ifdef _WIN32
-    typedef std::wstring nstring;
-    typedef std::wstringstream nstringstream;
-    typedef wchar_t nchar;
-#else
-    typedef std::string nstring;
-    typedef std::stringstream nstringstream;
-    typedef char nchar;
-#endif
-```
+typedef String nstring;
+typedef obufstream nstringstream;
+typedef char nchar;
 
+```
 By default all log files are stored in UTF-8 with BOM thanks to [UTF8Converter](#utf8converter).
 
 ## Wide string support
@@ -903,8 +882,6 @@ namespace plog
 }
 ```
 
-*Refer to [CustomType](samples/CustomType) for a complete sample.*
-
 ## Custom appender
 A custom appender must implement `IAppender` interface. Also it may accept [Formatter](#formatter) and [Converter](#converter) as template parameters however this is optional.
 
@@ -919,8 +896,6 @@ namespace plog
     };
 }
 ```
-
-*Refer to [CustomAppender](samples/CustomAppender) for a complete sample.*
 
 ## Custom formatter
 A formatter that is compatible with existing appenders must be a class with 2 static methods:
@@ -940,8 +915,6 @@ namespace plog
 }
 ```
 
-*Refer to [CustomFormatter](samples/CustomFormatter) for a complete sample.*
-
 ## Custom converter
 A converter must be a class with 2 static methods:
 
@@ -960,142 +933,5 @@ namespace plog
 }
 ```
 
-*Refer to [CustomConverter](samples/CustomConverter) for a complete sample.*
-
-# Samples
-There are a number of samples that demonstrate various aspects of using plog. They can be found in the [samples](samples) folder:
-
-|Sample|Description|
-|------|-----------|
-|[Android](samples/Android)|Shows how to use [AndroidAppender](#androidappender).|
-|[Chained](samples/Chained)|Shows how to chain a logger in a shared library with the main logger (route messages).|
-|[ColorConsole](samples/ColorConsole)|Shows how to use [ColorConsoleAppender](#colorconsoleappender).|
-|[CustomAppender](samples/CustomAppender)|Shows how to implement a custom appender that stores log messages in memory.|
-|[CustomFormatter](samples/CustomFormatter)|Shows how to implement a custom formatter.|
-|[CustomConverter](samples/CustomConverter)|Shows how to implement a custom converter that encrypts log messages.|
-|[CustomType](samples/CustomType)|Shows how to print a custom type to the log stream.|
-|[DebugOutput](samples/DebugOutput)|Shows how to use [DebugOutputAppender](#debugoutputappender) to write to the windows debug output.|
-|[Demo](samples/Demo)|Demonstrates log stream abilities, prints various types of messages.|
-|[EventLog](samples/EventLog)|Shows how to use [EventLogAppender](#eventlogappender) to write to the windows event log.|
-|[Facilities](samples/Facilities)|Shows how to use logging per facilities via multiple logger instances (useful for big projects).|
-|[Hello](samples/Hello)|A minimal introduction sample, shows the basic 3 steps to start using plog.|
-|[Library](samples/Library)|Shows plog usage in static libraries.|
-|[MultiAppender](samples/MultiAppender)|Shows how to use multiple appenders with the same logger.|
-|[MultiInstance](samples/MultiInstance)|Shows how to use multiple logger instances, each instance has its own independent configuration.|
-|[SkipNativeEOL](samples/SkipNativeEOL)|Shows how to skip [NativeEOLConverter](#nativeeolconverter).|
-|[ObjectiveC](samples/ObjectiveC)|Shows that plog can be used in ObjectiveC++.|
-|[Performance](samples/Performance)|Measures time per a log call.|
-|[UtcTime](samples/UtcTime)|Shows how to use UTC time instead of local time.|
-
-# References
-
-## Competing C++ log libraries
-
-- [Boost::Log](http://www.boost.org/doc/libs/release/libs/log/)
-- [EasyLogging++](https://github.com/easylogging/easyloggingpp)
-- [g2log](http://www.codeproject.com/Articles/288827/g-log-An-efficient-asynchronous-logger-using-Cplus)
-- [g3log](https://github.com/KjellKod/g3log)
-- [glog](https://code.google.com/p/google-glog/)
-- [Log4cplus](http://sourceforge.net/projects/log4cplus/)
-- [Log4cpp](http://log4cpp.sourceforge.net/)
-- [Log4cxx](http://logging.apache.org/log4cxx/)
-- [Pantheios](http://pantheios.sourceforge.net/)
-- [spdlog](https://github.com/gabime/spdlog/)
-- [reckless](https://github.com/mattiasflodin/reckless)
-- [loguru](https://github.com/emilk/loguru)
-- [blackhole](https://github.com/3Hren/blackhole)
-
-## Tools and useful info
-
-- [__if_exists Statement](https://msdn.microsoft.com/en-us/library/x7wy9xh3.aspx)
-- [Controlling Symbol Visibility](https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/CppRuntimeEnv/Articles/SymbolVisibility.html)
-- [Gravizo](http://gravizo.com)
-- [PlantUML](http://plantuml.sourceforge.net)
-- [DocToc](https://github.com/thlorenz/doctoc)
-- [CMake](http://www.cmake.org)
-
 # License
 Plog is licensed under the [MPL version 2.0](http://mozilla.org/MPL/2.0/). You can freely use it in your commercial or opensource software.
-
-# Version history
-
-## Version 1.1.5 (21 Oct 2019)
-- New: Use `NativeEOLConverter` by default (#145)
-- New: Add logger `instanceId` into `Record` (#141)
-- New: Add support for the printf style formatting (#139)
-- New: Make `severityFromString` case-insensitive
-- New: Define macro names with "PLOG" instead of "LOG" in order to avoid conflicts with "LOG" names defined in other packages or in system headers (#25, #129)
-- New: Add option for building samples (ON per default) (#125, #126)
-- New: Add CMake installer (#121, #122)
-- New: Add support for `QStringRef`
-- New: Modernize CMake (#106)
-- New: Allow rollLogFiles to be called manually (#100, #103)
-- New: Add ability to use UTC time (#101)
-- Fix: Disable `PLOG_GET_THIS()` by default (#120, #132)
-- Fix: Change `RegSetValueExW` prototype to match windows native declaration (void* -> BYTE*)
-- Fix: Move `System::String^` handler to a free function (#131)
-- Fix: Making sure we can build standalone under Windows (#123)
-- Fix: Parse error by ReSharper (#116)
-- Fix: Parse error by Clang Code Model in Qt Creator (#114)
-- Fix: Printing CustomType at begin of the stream (#94)
-- Fix: Make `RollingFileAppender` work with maxFiles set to 1 (#70)
-- Fix: Clang-tidy nullable issue
-
-## Version 1.1.4 (26 Mar 2018)
-- New: Add `-Wundef` support
-- New: Add [RTEMS](https://www.rtems.org) support (#87)
-- New: Add Intel C++ Compiler support (#84)
-- New: Add FreeBSD support (#83)
-- New: Add `-Wnon-virtual-dtor` support (#79)
-- New: Support `ostream` operator<< on Windows as well as `wostream` (#66)
-- Fix: Fix compilation for Android (#68)
-- Fix: Fix compiling with CMake 2.8
-
-## Version 1.1.3 (09 Aug 2017)
-- New: Introduce `LOG_ENABLE_WCHAR_INPUT` macro to control wide string support
-- New: Add support for managed C++ `System::String^` (#63)
-- New: Add missing macros for logging with severity NONE (#61)
-- Fix: Unable to build [NativeEOLConverter](#nativeeolconverter)/[UTF8Converter](#utf8converter) using Visual Studio (#59)
-- Fix: Use `WriteConsoleW` instead of global `setlocale` for writing unicode into Windows console (#58)
-- Fix: Mention about linking to `iconv` on macOS (#55)
-- Fix: `IF_LOG` macro didn't work for curly braces blocks
-
-## Version 1.1.2 (02 May 2017)
-- New: Add [NativeEOLConverter](#nativeeolconverter)
-- New: Add [MessageOnlyFormatter](#messageonlyformatter)
-- New: Slightly increase log performance on Windows (about 9%).
-
-## Version 1.1.1 (17 Apr 2017)
-- New: Ability to check whether event log registry entry exists (#36)
-- Fix: Update includes (#47)
-- Fix: Get rid of `windows.h` dependency (#45, #13)
-- Fix: Signed unsigned assignment warning (#40)
-- Fix: Build warning on macOS 10.12 Sierra (#39)
-
-## Version 1.1.0 (20 Nov 2016)
-- Fix: Introduce binary compatible interface to `Record` (WARNING: this is not compatible with 1.0.x version in [Chained mode](#chained-loggers), so don't mix 1.1.x and 1.0.x) (#34)
-
-## Version 1.0.2 (19 Nov 2016)
-- New: Default instanceId can be set via `LOG_DEFAULT_INSTANCE` (#11)
-- New: Support for `QString` (#30)
-- New: Support for C++Builder
-- New: `severityFromString` function (#15)
-- New: Capture source file name (disabled by default) (#21)
-- New: Add [DebugOutputAppender](#debugoutputappender) (#33)
-- New: Add [EventLogAppender](#eventlogappender) (#32)
-- Fix: Crash on processing Obj-C function name (#12)
-- Fix: Compatibility with [MinGW](http://www.mingw.org/) (#17)
-- Fix: `IF_LOG_` macro in if/else leads to miss else branch (#27)
-- Fix: Thread safety for [ConsoleAppender](#consoleappender)/[ColorConsoleAppender](#colorconsoleappender) (#18, #29)
-- Fix: Support for stream manipulators like `std::endl` (#31)
-- Fix: Compatibility with old Visual Studio versions
-
-## Version 1.0.1 (01 Nov 2015)
-- New: Add [ColorConsoleAppender](#colorconsoleappender)
-- Fix: Compatibility with [Mingw-w64](http://mingw-w64.org/) (#6)
-- Fix: Log file not created if file name contains Unicode characters in Windows (#7)
-- Fix: Flush stdout (#4)
-- Fix: IntelliSense error: expected an identifier (#3)
-
-## Version 1.0.0 (19 May 2015)
-- Initial public release

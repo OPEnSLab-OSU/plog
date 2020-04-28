@@ -1,7 +1,0 @@
-#include "include/plog/Log.h"
-#include "include/plog/Appenders/SerialAppender.h"
-#include "include/plog/Appenders/SimpleFileAppender.h"
-#include "include/plog/Formatters/TxtFormatter.h"
-#include "include/plog/Formatters/MessageOnlyFormatter.h"
-#include "include/plog/Formatters/FuncMessageFormatter.h"
-#include "include/plog/Formatters/CsvFormatter.h"
