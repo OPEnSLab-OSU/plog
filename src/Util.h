@@ -150,7 +150,7 @@ namespace plog
                 return f.fileSize();
             }
             
-            off_t open(util::nstring fileName)
+            off_t open(const util::nstring& fileName)
             {
                 return open(fileName.c_str());
             }
@@ -172,7 +172,7 @@ namespace plog
                 f.sync();
                 return len;
             }
-            int write(const String str)
+            int write(const util::nstring& str)
             {
                 return write(str.c_str(), str.length());
             }
@@ -199,7 +199,7 @@ namespace plog
                 return rm.remove();
             }
             
-            static int unlink(util::nstring fileName)
+            static int unlink(const util::nstring& fileName)
             {
                 return unlink(fileName.c_str());
             }
@@ -210,7 +210,7 @@ namespace plog
                 return old.rename(newFilename);
             }
             
-            static int rename(util::nstring oldName, util::nstring newName)
+            static int rename(const util::nstring& oldName, util::nstring& newName)
             {
                 return rename(oldName.c_str(), newName.c_str());
             }
