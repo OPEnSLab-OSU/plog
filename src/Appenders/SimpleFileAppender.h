@@ -1,7 +1,7 @@
 #pragma once
 #include "../Appenders/IAppender.h"
 #include "../Util.h"
-
+/*
 namespace plog
 {
     template<class Formatter>
@@ -58,3 +58,4 @@ namespace plog
         bool            m_firstWrite;
     };
 }
+*/

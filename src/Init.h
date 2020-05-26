@@ -35,30 +35,30 @@ namespace plog
     // RollingFileAppender with any Formatter
 
     template<class Formatter, int instanceId>
-    inline Logger<instanceId>& init(Severity maxSeverity, const util::nchar* fileName, size_t maxFileSize = 0, int maxFiles = 0)
+    inline Logger<instanceId>& init(Severity maxSeverity, const util::nchar* fileName, uint32_t time_split_seconds = 3600)
     {
-        static RollingFileAppender<Formatter> rollingFileAppender(fileName, maxFileSize, maxFiles);
+        static RollingFileAppender<Formatter> rollingFileAppender(fileName, time_split_seconds);
         return init<instanceId>(maxSeverity, &rollingFileAppender);
     }
 
     template<class Formatter>
-    inline Logger<PLOG_DEFAULT_INSTANCE_ID>& init(Severity maxSeverity, const util::nchar* fileName, size_t maxFileSize = 0, int maxFiles = 0)
+    inline Logger<PLOG_DEFAULT_INSTANCE_ID>& init(Severity maxSeverity, const util::nchar* fileName,  uint32_t time_split_seconds = 3600)
     {
-        return init<Formatter, PLOG_DEFAULT_INSTANCE_ID>(maxSeverity, fileName, maxFileSize, maxFiles);
+        return init<Formatter, PLOG_DEFAULT_INSTANCE_ID>(maxSeverity, fileName, time_split_seconds);
     }
 
     //////////////////////////////////////////////////////////////////////////
     // RollingFileAppender with TXT/CSV chosen by file extension
 
     template<int instanceId>
-    inline Logger<instanceId>& init(Severity maxSeverity, const util::nchar* fileName, size_t maxFileSize = 0, int maxFiles = 0)
+    inline Logger<instanceId>& init(Severity maxSeverity, const util::nchar* fileName, uint32_t time_split_seconds = 3600)
     {
-        return isCsv(fileName) ? init<CsvFormatter, instanceId>(maxSeverity, fileName, maxFileSize, maxFiles) : init<TxtFormatter, instanceId>(maxSeverity, fileName, maxFileSize, maxFiles);
+        return isCsv(fileName) ? init<CsvFormatter, instanceId>(maxSeverity, fileName, time_split_seconds) : init<TxtFormatter, instanceId>(maxSeverity, fileName, time_split_seconds);
     }
 
-    inline Logger<PLOG_DEFAULT_INSTANCE_ID>& init(Severity maxSeverity, const util::nchar* fileName, size_t maxFileSize = 0, int maxFiles = 0)
+    inline Logger<PLOG_DEFAULT_INSTANCE_ID>& init(Severity maxSeverity, const util::nchar* fileName, uint32_t time_split_seconds = 3600)
     {
-        return init<PLOG_DEFAULT_INSTANCE_ID>(maxSeverity, fileName, maxFileSize, maxFiles);
+        return init<PLOG_DEFAULT_INSTANCE_ID>(maxSeverity, fileName, time_split_seconds);
     }
 
     //////////////////////////////////////////////////////////////////////////

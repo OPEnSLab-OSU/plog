@@ -125,92 +125,97 @@ namespace plog
             NonCopyable(const NonCopyable&);
             NonCopyable& operator=(const NonCopyable&);
         };
+        
         class File : NonCopyable
         {
         public:
             File()
             {
-                f.dateTimeCallback(FatTime);
+                FatFile::dateTimeCallback(FatTime);
             }
 
-            File(const nchar* fileName)
-            {
-                open(fileName);
-            }
-
-            ~File()
-            {
-                close();
-            }
-
-            off_t open(const nchar* fileName)
+            bool open(const nchar* fileName)
             {
                 fname = util::nstring(fileName);
-                f.open(fileName, O_CREAT | O_WRONLY | O_APPEND);
-                return f.fileSize();
+                f.close();
+                f.clearError();
+                return f.open(fileName, O_CREAT | O_WRONLY | O_APPEND);
             }
             
-            off_t open(const util::nstring& fileName)
+            bool open(const util::nstring& fileName)
             {
                 return open(fileName.c_str());
-            }
-            
-            off_t reopen(void)
-            {
-                f.close();
-                f.open(fname.c_str(), O_WRONLY | O_AT_END);
-                return f.fileSize();
             }
 
             int write(const void* buf, size_t count)
             {
                 if(!f.isOpen())
-                {
-                    reopen();
-                }
+                    return 0;
                 int len = f.write(buf, count);
-                f.sync();
+                if (len > 0)
+                    f.sync();
                 return len;
             }
+
             int write(const util::nstring& str)
             {
                 return write(str.c_str(), str.length());
             }
 
-            off_t seek(off_t offset, int whence)
+            bool seek(off_t offset, int whence)
             {
-                if (whence == SEEK_END)
-                    f.seekEnd(offset);
-                else if (whence == SEEK_SET)
-                    f.seekSet(offset);
-                else if (whence == SEEK_CUR)
-                    f.seekCur(offset);
-                return f.curPosition();
+                if (f.isOpen()) {
+                    if (whence == SEEK_END)
+                        return f.seekEnd(offset);
+                    if (whence == SEEK_SET)
+                        return f.seekSet(offset);
+                    if (whence == SEEK_CUR)
+                        return f.seekCur(offset);
+                }
+                return false;
             }
 
-            void close()
+            bool close()
             {
-                f.close();
+                return f.close();
             }
 
-            static int unlink(const nchar* fileName)
+            uint32_t cur_position() {
+                if (f.isOpen())
+                    return f.curPosition();
+                return 0;
+            }
+
+            uint8_t get_error() {
+                return f.getError();
+            }
+
+            bool is_open() {
+                return f.isOpen() && (f.getError() == 0);
+            }
+
+            static bool unlink(const nchar* fileName)
             {
                 FatFile rm(fileName, O_RDWR);
-                return rm.remove();
+                if (rm.isOpen())
+                    return rm.remove();
+                return true;
             }
             
-            static int unlink(const util::nstring& fileName)
+            static bool unlink(const util::nstring& fileName)
             {
                 return unlink(fileName.c_str());
             }
 
-            static int rename(const nchar* oldFilename, const nchar* newFilename)
+            static bool rename(const nchar* oldFilename, const nchar* newFilename)
             {
                 FatFile old(oldFilename, O_RDWR);
-                return old.rename(newFilename);
+                if (old.isOpen())
+                    return old.rename(newFilename);
+                return false;
             }
             
-            static int rename(const util::nstring& oldName, util::nstring& newName)
+            static bool rename(const util::nstring& oldName, util::nstring& newName)
             {
                 return rename(oldName.c_str(), newName.c_str());
             }
@@ -219,8 +224,6 @@ namespace plog
             util::nstring fname;
             FatFile f;
             static void FatTime(uint16_t* date, uint16_t* time) {
-              uint16_t year;
-              uint8_t month, day, hour, minute, second;
               // User gets date and time from GPS or real-time clock here
               Time t;
               ftime(&t, 0); // UTC timezone

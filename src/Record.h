@@ -11,9 +11,26 @@ namespace plog
     {
     public:
         Record(Severity severity, const char* func, size_t line, const char* file, const void* object, int instanceId)
-            : m_severity(severity), m_tid(util::gettid()), m_object(object), m_line(line), m_func(func), m_file(file), m_instanceId(instanceId), m_message(new char[MAX_MSG_LEN], MAX_MSG_LEN)
+            : m_severity(severity), m_tid(util::gettid()), m_object(object), m_line(line), m_func(func), m_file(file), m_instanceId(instanceId), m_message_buf{}, m_message(m_message_buf, MAX_MSG_LEN)
         {
             util::ftime(&m_time);
+        }
+
+        Record(const Record& rhs)
+            : m_severity(rhs.m_severity)
+            , m_tid(rhs.m_tid)
+            , m_object(rhs.m_object)
+            , m_line(rhs.m_line)
+            , m_func(rhs.m_func)
+            , m_file(rhs.m_file)
+            , m_instanceId(rhs.m_instanceId)
+            , m_message_buf{}
+            , m_message(m_message_buf, MAX_MSG_LEN)
+            , m_time(rhs.m_time)
+            , m_funcStr(rhs.m_funcStr) {
+            // copy the message buffers
+            if (const_cast<Record&>(rhs).m_message.length())
+                m_message << const_cast<Record&>(rhs).m_message.buf();
         }
 
         Record& ref()
@@ -123,26 +140,22 @@ namespace plog
             return m_file;
         }
 
-        virtual ~Record() // virtual destructor to satisfy -Wnon-virtual-dtor warning
-        {
-            delete(m_message.buf());
-        }
-
         virtual int getInstanceId() const
         {
             return m_instanceId;
         }
 
     private:
-        util::Time              m_time;
         const Severity          m_severity;
         const unsigned int      m_tid;
         const void* const       m_object;
         const size_t            m_line;
-        util::nostringstream    m_message;
         const char* const       m_func;
         const char* const       m_file;
         const int               m_instanceId;
+        char                    m_message_buf[MAX_MSG_LEN];
+        util::nostringstream    m_message;
+        util::Time              m_time;
         mutable util::nstring   m_funcStr;
     };
 }
