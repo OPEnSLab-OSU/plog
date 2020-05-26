@@ -6,7 +6,7 @@
 #pragma once
 #include "Logger.h"
 #include "Init.h"
-#include "ShortFile.h"
+#include "PlogShortFile.h"
 
 //////////////////////////////////////////////////////////////////////////
 // Helper macros that get context info

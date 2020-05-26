@@ -21,4 +21,4 @@ namespace plog {
 
 
 /** Use this macro to get the filename of the current file */
-#define __PLOG_SHORT_FILE__ ({constexpr const char* const sf__ {_ShortFilePrivate::past_last_slash(__FILE__)}; sf__;})
+#define __PLOG_SHORT_FILE__ ({constexpr const char* const sf__ {plog::past_last_slash(__FILE__)}; sf__;})
