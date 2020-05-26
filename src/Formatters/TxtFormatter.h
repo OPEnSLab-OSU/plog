@@ -22,7 +22,7 @@ namespace plog
             ss << setfill(PLOG_NSTR('0')) << setw(2) << short(t.hour()) << PLOG_NSTR(":") << setfill(PLOG_NSTR('0')) << setw(2) << short(t.minute()) << PLOG_NSTR(":") << setfill(PLOG_NSTR('0')) << setw(2) << short(t.second()) << PLOG_NSTR(".") << setfill(PLOG_NSTR('0')) << setw(3) << record.getTime().millitm << PLOG_NSTR(" ");
             ss << setfill(PLOG_NSTR(' ')) << setw(5) << left << severityToString(record.getSeverity()) << PLOG_NSTR(" ");
             ss << PLOG_NSTR("[") << record.getTid() << PLOG_NSTR("] ");
-            ss << PLOG_NSTR("[") << record.getFunc() << PLOG_NSTR("@") << record.getLine() << PLOG_NSTR("] ");
+            ss << PLOG_NSTR("[") << record.getFile() << PLOG_NSTR(":") << record.getFunc() << PLOG_NSTR("@") << record.getLine() << PLOG_NSTR("] ");
             ss << record.getMessage() << PLOG_NSTR("\n");
             util::nstring str(ss.buf());
             return str;

@@ -6,6 +6,7 @@
 #pragma once
 #include "Logger.h"
 #include "Init.h"
+#include "ShortFile.h"
 
 //////////////////////////////////////////////////////////////////////////
 // Helper macros that get context info
@@ -18,11 +19,7 @@
 
 #   define PLOG_GET_FUNC()      __FUNCTION__
 
-#ifdef PLOG_CAPTURE_FILE
-#   define PLOG_GET_FILE()      __FILE__
-#else
-#   define PLOG_GET_FILE()      ""
-#endif
+#   define PLOG_GET_FILE()      __SHORT_FILE__
 
 //////////////////////////////////////////////////////////////////////////
 // Log severity level checker
