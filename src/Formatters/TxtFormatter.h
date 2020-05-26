@@ -15,8 +15,8 @@ namespace plog
 
         static util::nstring format(const Record& record)
         {
-            char buf[MAX_MSG_LEN+128];
-            util::nostringstream ss(buf, MAX_MSG_LEN+128);
+            char buf[MAX_MSG_LEN+256];
+            util::nostringstream ss(buf, MAX_MSG_LEN+256);
             DateTime t = record.getTime().time;
             ss << int(t.year()) << "-" << setfill(PLOG_NSTR('0')) << setw(2) << short(t.month()) << PLOG_NSTR("-") << setfill(PLOG_NSTR('0')) << setw(2) << short(t.day()) << PLOG_NSTR(" ");
             ss << setfill(PLOG_NSTR('0')) << setw(2) << short(t.hour()) << PLOG_NSTR(":") << setfill(PLOG_NSTR('0')) << setw(2) << short(t.minute()) << PLOG_NSTR(":") << setfill(PLOG_NSTR('0')) << setw(2) << short(t.second()) << PLOG_NSTR(".") << setfill(PLOG_NSTR('0')) << setw(3) << record.getTime().millitm << PLOG_NSTR(" ");

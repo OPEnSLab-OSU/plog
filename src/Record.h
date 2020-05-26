@@ -3,7 +3,7 @@
 #include "Severity.h"
 #include "Util.h"
 
-#define MAX_MSG_LEN 128
+#define MAX_MSG_LEN 256
 
 namespace plog
 {

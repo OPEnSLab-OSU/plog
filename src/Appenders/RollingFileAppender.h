@@ -130,7 +130,7 @@ namespace plog
         util::nstring   m_fileNameNoExt;
         long      m_startfiletime;
         char      m_curfilename[128];
-        CircularBuffer<Record, 32> m_backup;
+        CircularBuffer<Record, 16> m_backup;
         uint32_t  m_drop_count;
     };
 }
