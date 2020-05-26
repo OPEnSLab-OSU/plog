@@ -1,6 +1,6 @@
 #pragma once
 
-namespace _ShortFilePrivate {
+namespace plog {
     using cstr = const char * const;
 
     static constexpr cstr past_last_slash(cstr str, cstr last_slash)
@@ -21,4 +21,4 @@ namespace _ShortFilePrivate {
 
 
 /** Use this macro to get the filename of the current file */
-#define __SHORT_FILE__ ({constexpr const char* const sf__ {_ShortFilePrivate::past_last_slash(__FILE__)}; sf__;})
+#define __PLOG_SHORT_FILE__ ({constexpr const char* const sf__ {_ShortFilePrivate::past_last_slash(__FILE__)}; sf__;})

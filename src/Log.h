@@ -19,7 +19,7 @@
 
 #   define PLOG_GET_FUNC()      __FUNCTION__
 
-#   define PLOG_GET_FILE()      __SHORT_FILE__
+#   define PLOG_GET_FILE()      __PLOG_SHORT_FILE__
 
 //////////////////////////////////////////////////////////////////////////
 // Log severity level checker
