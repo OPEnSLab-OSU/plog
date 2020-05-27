@@ -4,6 +4,7 @@
 #include "../Converters/NativeEOLConverter.h"
 #include "../Util.h"
 #include "../CircularBuffer.h"
+#include "../Log.h"
 
 namespace plog
 {
@@ -58,7 +59,7 @@ namespace plog
 
             // file is open! if there's a drop count, log how many entries we dropped
             if (m_drop_count > 0) {
-                Record droperror(Severity::warning, __FUNCTION__, __LINE__, __FILE__, this, 0);
+                Record droperror(Severity::warning, PLOG_GET_FUNC() , __LINE__, PLOG_GET_FILE(), this, 0);
                 droperror << "Dropped " << m_drop_count << " records due to SD error";
                 m_drop_count = 0;
                 if (!writeRecord(droperror)) {
