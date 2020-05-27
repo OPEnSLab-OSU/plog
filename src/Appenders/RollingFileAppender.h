@@ -18,7 +18,8 @@ namespace plog
             , m_fileNameNoExt()
             , m_startfiletime(0)
             , m_curfilename{ 0 }
-            , m_backup()
+            , m_backup{ 0 }
+            , m_backup_count(0)
             , m_drop_count(0)
         {
             util::splitFileName(fileName, m_fileNameNoExt, m_fileExt);
@@ -47,30 +48,28 @@ namespace plog
             }
 
             // write all the backed up records in m_backup, if any
-            while (!m_backup.empty()) {
-                const Record& temp = m_backup.front();
-                if (!writeRecord(temp)) {
-                    // queue the record and return
-                    m_backup.add_back(record);
+            while (m_backup_count > 0) {
+                int res = m_file.write(m_backup, m_backup_count);
+                if (res > 0)
+                    m_backup_count -= res;
+                if (res <= 0)
                     return;
-                }
-                m_backup.destroy_front();
             }
 
             // file is open! if there's a drop count, log how many entries we dropped
             if (m_drop_count > 0) {
                 Record droperror(Severity::warning, __FUNCTION__, __LINE__, __PLOG_SHORT_FILE__, this, 0);
                 droperror << "Dropped " << m_drop_count << " records due to SD error";
-                m_drop_count = 0;
                 if (!writeRecord(droperror)) {
                     // queue the record and return
-                    m_backup.add_back(record);
+                    pushToBackup(record);
                     return;
                 }
+                m_drop_count = 0;
             }
 
             if (!writeRecord(record))
-                m_backup.add_back(record);
+                pushToBackup(record);
         }
 
         void sync() {
@@ -79,12 +78,15 @@ namespace plog
 
     private:
         void pushToBackup(const Record& record) {
-            if (m_backup.full()) {
+            util::nstring str = Formatter::format(record);
+            if (sizeof(m_backup) - m_backup_count <= str.length()) {
                 Serial.println("PLOG Warning: discarding records due to buffer overflow.");
-                m_backup.destroy_front();
                 m_drop_count++;
             }
-            m_backup.add_back(record);
+            // add the formatted string to the backup buffer
+            for (size_t i = 0; i < str.length(); i++) {
+                m_backup[m_backup_count++] = str.charAt(i);
+            }
         }
 
         bool writeRecord(const Record& record) {
@@ -135,7 +137,8 @@ namespace plog
         util::nstring   m_fileNameNoExt;
         long      m_startfiletime;
         char      m_curfilename[128];
-        CircularBuffer<Record, 16> m_backup;
+        char      m_backup[2048];
+        size_t    m_backup_count;
         uint32_t  m_drop_count;
     };
 }
