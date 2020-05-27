@@ -83,9 +83,11 @@ namespace plog
                 Serial.println("PLOG Warning: discarding records due to buffer overflow.");
                 m_drop_count++;
             }
-            // add the formatted string to the backup buffer
-            for (size_t i = 0; i < str.length(); i++) {
-                m_backup[m_backup_count++] = str.charAt(i);
+            else {
+                // add the formatted string to the backup buffer
+                for (size_t i = 0; i < str.length(); i++) {
+                    m_backup[m_backup_count++] = str.charAt(i);
+                }
             }
         }
 
