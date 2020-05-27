@@ -73,6 +73,10 @@ namespace plog
                 m_backup.add_back(record);
         }
 
+        void sync() {
+            m_file.sync();
+        }
+
     private:
         void pushToBackup(const Record& record) {
             if (m_backup.full()) {

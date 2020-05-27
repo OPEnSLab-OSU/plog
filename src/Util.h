@@ -133,10 +133,16 @@ namespace plog
             {
                 FatFile::dateTimeCallback(FatTime);
             }
+            
+            bool is_open() {
+                return f.isOpen() && (f.getError() == 0);
+            }
 
             bool open(const nchar* fileName)
             {
                 fname = util::nstring(fileName);
+                if (is_open())
+                    f.sync();
                 f.close();
                 f.clearError();
                 return f.open(fileName, O_CREAT | O_WRONLY | O_APPEND);
@@ -151,10 +157,7 @@ namespace plog
             {
                 if(!f.isOpen())
                     return 0;
-                int len = f.write(buf, count);
-                if (len > 0)
-                    f.sync();
-                return len;
+                return f.write(buf, count);
             }
 
             int write(const util::nstring& str)
@@ -175,8 +178,16 @@ namespace plog
                 return false;
             }
 
+            bool sync() {
+                if (is_open())
+                    return f.sync();
+                return false;
+            }
+
             bool close()
             {
+                if (is_open()) 
+                    f.sync();
                 return f.close();
             }
 
@@ -188,10 +199,6 @@ namespace plog
 
             uint8_t get_error() {
                 return f.getError();
-            }
-
-            bool is_open() {
-                return f.isOpen() && (f.getError() == 0);
             }
 
             static bool unlink(const nchar* fileName)
